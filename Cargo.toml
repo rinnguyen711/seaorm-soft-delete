@@ -1,0 +1,19 @@
+[package]
+name = "seaorm-soft-delete"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+description = "Soft-delete support for SeaORM entities"
+license = "MIT"
+repository = "https://github.com/YOUR_USERNAME/seaorm-soft-delete"
+
+[dependencies]
+sea-orm = { version = "1", features = ["macros"] }
+sea-orm-migration = { version = "1" }
+chrono = "0.4"
+
+[dev-dependencies]
+sea-orm = { version = "1", features = ["sqlx-postgres", "runtime-tokio-rustls", "macros"] }
+tokio = { version = "1", features = ["full"] }
+sea-orm-migration = { version = "1", features = ["sqlx-postgres", "runtime-tokio-rustls"] }
+dotenvy = "0.15"

@@ -20,7 +20,7 @@ seaorm-soft-delete = "0.1"
 use seaorm_soft_delete::SoftDeleteMigration;
 
 // inside your MigrationTrait::up()
-SoftDeleteMigration::add_column(&mut manager, Users::Table).await?;
+SoftDeleteMigration::add_column(&manager, Users::Table).await?;
 ```
 
 > **Note:** `add_column` uses `IF NOT EXISTS` — idempotent on PostgreSQL only.

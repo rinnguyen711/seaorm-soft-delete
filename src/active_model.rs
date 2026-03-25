@@ -1,4 +1,4 @@
-use sea_orm::{ActiveModelTrait, ActiveModelBehavior, DatabaseConnection, DbErr, EntityTrait, IntoActiveModel};
+use sea_orm::{ActiveModelTrait, ActiveModelBehavior, DatabaseConnection, DbErr, DeleteResult, EntityTrait, IntoActiveModel};
 use chrono::{DateTime, Utc};
 use std::future::Future;
 
@@ -35,5 +35,17 @@ pub trait SoftDeleteActiveModel: ActiveModelTrait + ActiveModelBehavior + Sized 
     {
         self.set_deleted_at(None);
         self.update(db)
+    }
+
+    /// Permanently delete this record from the database.
+    /// Consumes `self`. Unlike `soft_delete`, this cannot be undone.
+    fn hard_delete<'a>(
+        self,
+        db: &'a DatabaseConnection,
+    ) -> impl Future<Output = Result<DeleteResult, DbErr>> + Send + 'a
+    where
+        Self: Send + 'a,
+    {
+        self.delete(db)
     }
 }

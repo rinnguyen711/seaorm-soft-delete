@@ -12,7 +12,13 @@ Queries exclude soft-deleted records by default.
 seaorm-soft-delete = "0.1"
 ```
 
-## Usage
+If you don't need the migration helper, disable the default feature:
+
+```toml
+seaorm-soft-delete = { version = "0.1", default-features = false }
+```
+
+## Setup
 
 ### 1. Add `deleted_at` column via migration
 
@@ -23,7 +29,7 @@ use seaorm_soft_delete::SoftDeleteMigration;
 SoftDeleteMigration::add_column(&manager, Users::Table).await?;
 ```
 
-> **Note:** `add_column` uses `IF NOT EXISTS` — idempotent on PostgreSQL only.
+> **Note:** Uses `ADD COLUMN IF NOT EXISTS` — idempotent on **PostgreSQL only**.
 > On MySQL/SQLite, guard the migration yourself.
 
 ### 2. Implement `SoftDeleteEntity` on your entity
@@ -38,18 +44,6 @@ impl SoftDeleteEntity for users::Entity {
 }
 ```
 
-This unlocks:
-
-```rust
-// Excludes soft-deleted records (WHERE deleted_at IS NULL) — use this by default
-users::Entity::find_active().all(&db).await?;
-
-// Includes soft-deleted records
-users::Entity::find_all().all(&db).await?;
-```
-
-Both return `Select<Entity>` — chain `.filter()`, `.order_by()`, etc. normally.
-
 ### 3. Implement `SoftDeleteActiveModel` on your active model
 
 ```rust
@@ -63,23 +57,64 @@ impl SoftDeleteActiveModel for users::ActiveModel {
 }
 ```
 
-This unlocks:
+### 4. Implement `SoftDeleteModel` on your model (optional)
+
+Adds `is_deleted()` directly on model instances.
 
 ```rust
-// Soft-delete (sets deleted_at = NOW())
-let active_model = user.into_active_model();
-active_model.soft_delete(&db).await?;
+use seaorm_soft_delete::SoftDeleteModel;
 
-// Restore (sets deleted_at = NULL)
-let active_model = user.into_active_model();
-active_model.restore(&db).await?;
+impl SoftDeleteModel for users::Model {
+    fn deleted_at(&self) -> Option<chrono::DateTime<chrono::Utc>> {
+        self.deleted_at.map(|v| v.into())
+    }
+}
 ```
 
-Both consume `self` and return `Result<Model, DbErr>`.
+## Querying
+
+```rust
+// Active records only (WHERE deleted_at IS NULL) — use by default
+users::Entity::find_active().all(&db).await?;
+users::Entity::find_active_by_id(id).one(&db).await?;
+
+// Soft-deleted records only (WHERE deleted_at IS NOT NULL)
+users::Entity::find_deleted().all(&db).await?;
+users::Entity::find_deleted_by_id(id).one(&db).await?;
+
+// All records including soft-deleted
+users::Entity::find_all().all(&db).await?;
+```
+
+All return `Select<Entity>` — chain `.filter()`, `.order_by()`, `.paginate()` etc. normally.
+
+## Write operations
+
+```rust
+let model: ActiveModel = user.into();
+
+// Soft-delete: sets deleted_at = NOW()
+model.soft_delete(&db).await?;
+
+// Restore: sets deleted_at = NULL
+model.restore(&db).await?;
+
+// Hard delete: permanently removes the row
+model.hard_delete(&db).await?;
+```
+
+## Checking deleted state
+
+```rust
+// Requires SoftDeleteModel impl (see Setup step 4)
+if user.is_deleted() {
+    println!("deleted at {:?}", user.deleted_at());
+}
+```
 
 ## Performance tip
 
-For large tables, add a partial index on `deleted_at IS NULL`:
+For large tables, add a partial index so active-record queries stay fast:
 
 ```sql
 CREATE INDEX idx_users_active ON users (id) WHERE deleted_at IS NULL;

@@ -1,6 +1,5 @@
-use sea_orm::{ActiveModelTrait, ActiveModelBehavior, DatabaseConnection, DbErr, DeleteResult, EntityTrait, IntoActiveModel};
+use sea_orm::{ActiveModelBehavior, ActiveModelTrait, DatabaseConnection, DbErr, DeleteResult, EntityTrait, IntoActiveModel};
 use chrono::{DateTime, Utc};
-use std::future::Future;
 
 type ModelOf<A> = <<A as ActiveModelTrait>::Entity as EntityTrait>::Model;
 
@@ -10,7 +9,15 @@ pub trait SoftDeleteActiveModel: ActiveModelTrait + ActiveModelBehavior + Sized 
     fn set_deleted_at(&mut self, value: Option<DateTime<Utc>>);
 
     /// Soft-delete this record by setting `deleted_at = NOW()`.
-    /// Consumes `self` — the active model cannot be reused after this call.
+    ///
+    /// Idempotent — calling this on an already-deleted record overwrites the
+    /// existing timestamp with the current time.
+    ///
+    /// Consumes `self`. Use [`restore`] to undo.
+    ///
+    /// # Note
+    /// This trait uses `impl Trait` in return position and is not object-safe.
+    /// `Box<dyn SoftDeleteActiveModel>` will not compile.
     fn soft_delete<'a>(
         mut self,
         db: &'a DatabaseConnection,
@@ -24,7 +31,11 @@ pub trait SoftDeleteActiveModel: ActiveModelTrait + ActiveModelBehavior + Sized 
     }
 
     /// Restore a soft-deleted record by setting `deleted_at = NULL`.
-    /// Consumes `self` — the active model cannot be reused after this call.
+    ///
+    /// Idempotent — calling this on an already-active record is a no-op
+    /// (sets `deleted_at` to `NULL` again).
+    ///
+    /// Consumes `self`.
     fn restore<'a>(
         mut self,
         db: &'a DatabaseConnection,
@@ -37,8 +48,13 @@ pub trait SoftDeleteActiveModel: ActiveModelTrait + ActiveModelBehavior + Sized 
         self.update(db)
     }
 
-    /// Permanently delete this record from the database.
-    /// Consumes `self`. Unlike `soft_delete`, this cannot be undone.
+    /// Permanently remove this record from the database. Cannot be undone.
+    ///
+    /// This does not check whether the record is soft-deleted first — it will
+    /// hard-delete active records too. Use [`soft_delete`] if you want
+    /// recoverable deletion.
+    ///
+    /// Consumes `self`.
     fn hard_delete<'a>(
         self,
         db: &'a DatabaseConnection,

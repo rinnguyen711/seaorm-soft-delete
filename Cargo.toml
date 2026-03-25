@@ -3,11 +3,15 @@ name = "seaorm-soft-delete"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.85"
+authors = ["rinnguyen711 <rinnguyen711@gmail.com>"]
 description = "Soft-delete support for SeaORM entities"
 license = "MIT"
 repository = "https://github.com/rinnguyen711/seaorm-soft-delete"
-keywords = ["seaorm", "soft-delete", "orm", "database"]
-categories = ["database"]
+homepage = "https://github.com/rinnguyen711/seaorm-soft-delete"
+documentation = "https://docs.rs/seaorm-soft-delete"
+keywords = ["seaorm", "soft-delete", "orm", "database", "deleted-at"]
+categories = ["database", "asynchronous"]
+exclude = ["tests/", ".env*", "docker-compose.yml"]
 
 [features]
 default = ["migration"]

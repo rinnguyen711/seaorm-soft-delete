@@ -83,7 +83,7 @@ users::Entity::find_deleted().all(&db).await?;
 users::Entity::find_deleted_by_id(id).one(&db).await?;
 
 // All records including soft-deleted
-users::Entity::find_all().all(&db).await?;
+users::Entity::find_with_deleted().all(&db).await?;
 ```
 
 All return `Select<Entity>` — chain `.filter()`, `.order_by()`, `.paginate()` etc. normally.
@@ -129,3 +129,7 @@ Rust 1.85+
 - Cascading soft deletes
 - Custom column names (always `deleted_at`)
 - MySQL/SQLite idempotent migration
+
+## License
+
+MIT

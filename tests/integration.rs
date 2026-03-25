@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, Database, DatabaseConnection, DbErr, EntityTrait,
+    ActiveModelTrait, ColumnTrait, Database, DatabaseConnection, DbErr,
     QueryFilter, Set,
 };
 use sea_orm_migration::prelude::*;

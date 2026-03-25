@@ -17,3 +17,4 @@ sea-orm = { version = "1", features = ["sqlx-postgres", "runtime-tokio-rustls", 
 tokio = { version = "1", features = ["full"] }
 sea-orm-migration = { version = "1", features = ["sqlx-postgres", "runtime-tokio-rustls"] }
 dotenvy = "0.15"
+async-trait = "0.1"

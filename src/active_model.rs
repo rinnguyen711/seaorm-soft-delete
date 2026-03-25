@@ -5,6 +5,8 @@ use std::future::Future;
 type ModelOf<A> = <<A as ActiveModelTrait>::Entity as EntityTrait>::Model;
 
 pub trait SoftDeleteActiveModel: ActiveModelTrait + ActiveModelBehavior + Sized {
+    /// Set the `deleted_at` field to the given value.
+    /// Implementors must map this to the correct active-model column setter.
     fn set_deleted_at(&mut self, value: Option<DateTime<Utc>>);
 
     /// Soft-delete this record by setting `deleted_at = NOW()`.
